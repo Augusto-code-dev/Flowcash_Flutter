@@ -20,17 +20,144 @@ class MyApp extends StatelessWidget {
 }
 
 // Tela principal (Dashboard)
-class Tela1 extends StatelessWidget {
+class Tela1 extends StatefulWidget {
   const Tela1({super.key});
 
-  final double salario = 1400.0;
-  final double saldoAtual = 1380.0;
+  @override
+  State<Tela1> createState() => _Tela1State();
+}
 
-  final List<Map<String, String>> gastos = const [
+class _Tela1State extends State<Tela1> {
+  final double salario = 1400.0;
+  double saldoAtual = 1380.0;
+
+  final List<Map<String, String>> gastos = [
     {"valor": "R\$10,00", "motivo": "Comida", "dia": "Segunda"},
     {"valor": "R\$50,00", "motivo": "Transporte", "dia": "Terça"},
     {"valor": "R\$30,00", "motivo": "Compras", "dia": "Quarta"},
   ];
+
+  void _adicionarGasto() {
+    final valorController = TextEditingController();
+    final motivoController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Novo Gasto"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: valorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Valor (R\$)"),
+              ),
+              TextField(
+                controller: motivoController,
+                decoration: const InputDecoration(labelText: "Motivo"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Adicionar"),
+              onPressed: () {
+                if (valorController.text.isNotEmpty &&
+                    motivoController.text.isNotEmpty) {
+                  setState(() {
+                    final valor = double.tryParse(valorController.text) ?? 0.0;
+                    gastos.add({
+                      "valor": "R\$${valor.toStringAsFixed(2)}",
+                      "motivo": motivoController.text,
+                      "dia": "Hoje",
+                    });
+                    saldoAtual -= valor;
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Gasto adicionado!")),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editarGasto(int index) {
+    final gasto = gastos[index];
+    final valorController = TextEditingController(
+        text: gasto["valor"]?.replaceAll("R\$", "").replaceAll(",", "."));
+    final motivoController = TextEditingController(text: gasto["motivo"]);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Editar Gasto"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: valorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Valor (R\$)"),
+              ),
+              TextField(
+                controller: motivoController,
+                decoration: const InputDecoration(labelText: "Motivo"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Salvar"),
+              onPressed: () {
+                if (valorController.text.isNotEmpty &&
+                    motivoController.text.isNotEmpty) {
+                  setState(() {
+                    final valor = double.tryParse(valorController.text) ?? 0.0;
+                    gastos[index] = {
+                      "valor": "R\$${valor.toStringAsFixed(2)}",
+                      "motivo": motivoController.text,
+                      "dia": "Hoje",
+                    };
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Gasto atualizado!")),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _excluirGasto(int index) {
+    setState(() {
+      gastos.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Gasto excluído!")),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +166,6 @@ class Tela1 extends StatelessWidget {
         title: const Text("Controle de Gastos"),
         backgroundColor: Colors.green,
         actions: [
-          // Botão para abrir o chat
           IconButton(
             icon: const Icon(Icons.chat),
             onPressed: () {
@@ -64,18 +190,32 @@ class Tela1 extends StatelessWidget {
             const SizedBox(height: 24),
             const Text("Gastos Recentes",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ...gastos.map((gasto) => ListTile(
-                  leading: const Icon(Icons.money),
-                  title: Text("${gasto['motivo']} - ${gasto['valor']}"),
-                  subtitle: Text("Dia: ${gasto['dia']}"),
-                )),
+            ...gastos.map((gasto) {
+              final index = gastos.indexOf(gasto);
+              return ListTile(
+                leading: const Icon(Icons.money),
+                title: Text("${gasto['motivo']} - ${gasto['valor']}"),
+                subtitle: Text("Dia: ${gasto['dia']}"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _editarGasto(index),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _excluirGasto(index),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Aqui você pode abrir uma tela de cadastro de gasto
-        },
+        onPressed: _adicionarGasto,
         child: const Icon(Icons.add),
         backgroundColor: Colors.green,
       ),
