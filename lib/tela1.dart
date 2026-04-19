@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'models/gasto.dart';
+import 'db/database_helper.dart';
+
+
 
 void main() {
   runApp(const MyApp());
 }
 
-// Widget raiz
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -14,12 +17,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FlowCash',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: const Tela1(), // Tela inicial
+      home: const Tela1(),
     );
   }
 }
 
-// Tela principal (Dashboard)
 class Tela1 extends StatefulWidget {
   const Tela1({super.key});
 
@@ -31,133 +33,146 @@ class _Tela1State extends State<Tela1> {
   final double salario = 1400.0;
   double saldoAtual = 1380.0;
 
-  final List<Map<String, String>> gastos = [
-    {"valor": "R\$10,00", "motivo": "Comida", "dia": "Segunda"},
-    {"valor": "R\$50,00", "motivo": "Transporte", "dia": "Terça"},
-    {"valor": "R\$30,00", "motivo": "Compras", "dia": "Quarta"},
-  ];
+  List<Gasto> gastos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarGastos();
+  }
+
+  Future<void> _carregarGastos() async {
+    final lista = await DatabaseHelper.getGastos();
+    setState(() {
+      gastos = lista;
+    });
+  }
 
   void _adicionarGasto() {
-    final valorController = TextEditingController();
-    final motivoController = TextEditingController();
+  final valorController = TextEditingController();
+  final motivoController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Novo Gasto"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: valorController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Valor (R\$)"),
-              ),
-              TextField(
-                controller: motivoController,
-                decoration: const InputDecoration(labelText: "Motivo"),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text("Cancelar"),
-              onPressed: () => Navigator.pop(context),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Novo Gasto"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: valorController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Valor (R\$)"),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Adicionar"),
-              onPressed: () {
-                if (valorController.text.isNotEmpty &&
-                    motivoController.text.isNotEmpty) {
-                  setState(() {
-                    final valor = double.tryParse(valorController.text) ?? 0.0;
-                    gastos.add({
-                      "valor": "R\$${valor.toStringAsFixed(2)}",
-                      "motivo": motivoController.text,
-                      "dia": "Hoje",
-                    });
-                    saldoAtual -= valor;
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Gasto adicionado!")),
-                  );
-                }
-              },
+            TextField(
+              controller: motivoController,
+              decoration: const InputDecoration(labelText: "Motivo"),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  void _editarGasto(int index) {
-    final gasto = gastos[index];
-    final valorController = TextEditingController(
-        text: gasto["valor"]?.replaceAll("R\$", "").replaceAll(",", "."));
-    final motivoController = TextEditingController(text: gasto["motivo"]);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Editar Gasto"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: valorController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Valor (R\$)"),
-              ),
-              TextField(
-                controller: motivoController,
-                decoration: const InputDecoration(labelText: "Motivo"),
-              ),
-            ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
           ),
-          actions: [
-            TextButton(
-              child: const Text("Cancelar"),
-              onPressed: () => Navigator.pop(context),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () async {
+              if (valorController.text.isNotEmpty &&
+                  motivoController.text.isNotEmpty) {
+                final valor = double.tryParse(valorController.text) ?? 0.0;
+                final novoGasto = Gasto(
+                  valor: valor,
+                  motivo: motivoController.text,
+                  dia: "Hoje",
+                );
+                await DatabaseHelper.insertGasto(novoGasto);
+                saldoAtual -= valor;
+
+                if (!mounted) return; // ✅ evita erro de contexto
+                Navigator.pop(context);
+                _carregarGastos();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Gasto adicionado!")),
+                );
+              }
+            },
+            child: const Text("Adicionar"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+  void _editarGasto(Gasto gasto) {
+  final valorController = TextEditingController(text: gasto.valor.toString());
+  final motivoController = TextEditingController(text: gasto.motivo);
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Editar Gasto"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: valorController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Valor (R\$)"),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Salvar"),
-              onPressed: () {
-                if (valorController.text.isNotEmpty &&
-                    motivoController.text.isNotEmpty) {
-                  setState(() {
-                    final valor = double.tryParse(valorController.text) ?? 0.0;
-                    gastos[index] = {
-                      "valor": "R\$${valor.toStringAsFixed(2)}",
-                      "motivo": motivoController.text,
-                      "dia": "Hoje",
-                    };
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Gasto atualizado!")),
-                  );
-                }
-              },
+            TextField(
+              controller: motivoController,
+              decoration: const InputDecoration(labelText: "Motivo"),
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () async {
+              final valor = double.tryParse(valorController.text) ?? 0.0;
+              final gastoAtualizado = Gasto(
+                id: gasto.id,
+                valor: valor,
+                motivo: motivoController.text,
+                dia: "Hoje",
+              );
+              await DatabaseHelper.updateGasto(gastoAtualizado);
 
-  void _excluirGasto(int index) {
-    setState(() {
-      gastos.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Gasto excluído!")),
-    );
-  }
+              if (!mounted) return; // ✅ evita erro de contexto
+              Navigator.pop(context);
+              _carregarGastos();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Gasto atualizado!")),
+              );
+            },
+            child: const Text("Salvar"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+  void _excluirGasto(int id) async {
+  await DatabaseHelper.deleteGasto(id);
+
+  if (!mounted) return; // ✅ evita erro de contexto
+  _carregarGastos();
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Gasto excluído!")),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -165,17 +180,6 @@ class _Tela1State extends State<Tela1> {
       appBar: AppBar(
         title: const Text("Controle de Gastos"),
         backgroundColor: Colors.green,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChatScreen()),
-              );
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -190,120 +194,41 @@ class _Tela1State extends State<Tela1> {
             const SizedBox(height: 24),
             const Text("Gastos Recentes",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ...gastos.map((gasto) {
-              final index = gastos.indexOf(gasto);
-              return ListTile(
-                leading: const Icon(Icons.money),
-                title: Text("${gasto['motivo']} - ${gasto['valor']}"),
-                subtitle: Text("Dia: ${gasto['dia']}"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _editarGasto(index),
+            Expanded(
+              child: ListView.builder(
+                itemCount: gastos.length,
+                itemBuilder: (context, index) {
+                  final gasto = gastos[index];
+                  return ListTile(
+                    leading: const Icon(Icons.money),
+                    title: Text("${gasto.motivo} - R\$${gasto.valor.toStringAsFixed(2)}"),
+                    subtitle: Text("Dia: ${gasto.dia}"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _editarGasto(gasto),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _excluirGasto(gasto.id!),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _excluirGasto(index),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _adicionarGasto,
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-}
+  onPressed: _adicionarGasto,
+  backgroundColor: Colors.green,
+  child: const Icon(Icons.add), // ✅ agora o child está por último
+),
 
-// Tela de Chat
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-
-  final List<Map<String, String>> mensagens = [
-    {"remetente": "bot", "texto": "Olá! Eu sou seu assistente FlowCash."},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("FlowCash - Chatbot"),
-        backgroundColor: Colors.green,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: mensagens.length,
-              itemBuilder: (context, index) {
-                final msg = mensagens[index];
-                final isUser = msg["remetente"] == "user";
-
-                return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isUser ? Colors.green[200] : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(msg["texto"] ?? ""),
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            color: Colors.grey[100],
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: "Digite sua mensagem...",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.green),
-                  onPressed: () {
-                    if (_controller.text.isNotEmpty) {
-                      setState(() {
-                        mensagens.add({
-                          "remetente": "user",
-                          "texto": _controller.text,
-                        });
-                      });
-                      _controller.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
