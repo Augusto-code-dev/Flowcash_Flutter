@@ -1,34 +1,48 @@
-import 'package:flowcash/tela1.dart';
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
 
-// Ponto de entrada do app
-void main() {
-  runApp(const MyApp());
-}
-
-// Widget raiz
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FlowCash',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const LoginScreen(),
-       routes: 
-       {
-          "/dashboard": (context) => const Tela1(),
-        },
-
-    );
-  }
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-// Tela de Login
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _loginController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  final IAuthService authService = AuthServiceMock();
+  // AuthService() API real
+
+  void _handleLogin() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await authService.login(
+        _loginController.text,
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      print("Token recebido: ${result['access_token']}");
+
+      Navigator.pushReplacementNamed(context, "/dashboard");
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+
+      final errorMessage = e.toString().replaceAll("Exception: ", "");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,17 +64,19 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _loginController,
+              decoration: const InputDecoration(
                 labelText: "E-mail ou Usuário",
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
-            const TextField(
+            TextField(
+              controller: _passwordController,
               obscureText: true,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Senha",
                 prefixIcon: Icon(Icons.lock),
                 border: OutlineInputBorder(),
@@ -78,15 +94,15 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-               onPressed: () 
-               {
-                  Navigator.pushReplacementNamed(context, "/dashboard");
-                },
+              onPressed: _handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 minimumSize: const Size(double.infinity, 48),
               ),
-              child: const Text("Entrar",  style: TextStyle(color: Colors.white)),
+              child: const Text(
+                "Entrar",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             const SizedBox(height: 16),
             TextButton(

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/gasto.dart';
 import 'db/database_helper.dart';
-
-
+import 'chat.dart'; // ✅ import da tela de chat
 
 void main() {
   runApp(const MyApp());
@@ -49,130 +48,127 @@ class _Tela1State extends State<Tela1> {
   }
 
   void _adicionarGasto() {
-  final valorController = TextEditingController();
-  final motivoController = TextEditingController();
+    final valorController = TextEditingController();
+    final motivoController = TextEditingController();
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text("Novo Gasto"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: valorController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Valor (R\$)"),
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Novo Gasto"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: valorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Valor (R\$)"),
+              ),
+              TextField(
+                controller: motivoController,
+                decoration: const InputDecoration(labelText: "Motivo"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
             ),
-            TextField(
-              controller: motivoController,
-              decoration: const InputDecoration(labelText: "Motivo"),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () async {
+                if (valorController.text.isNotEmpty &&
+                    motivoController.text.isNotEmpty) {
+                  final valor = double.tryParse(valorController.text) ?? 0.0;
+                  final novoGasto = Gasto(
+                    valor: valor,
+                    motivo: motivoController.text,
+                    dia: "Hoje",
+                  );
+                  await DatabaseHelper.insertGasto(novoGasto);
+                  saldoAtual -= valor;
+
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  _carregarGastos();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Gasto adicionado!")),
+                  );
+                }
+              },
+              child: const Text("Adicionar"),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
+        );
+      },
+    );
+  }
+
+  void _editarGasto(Gasto gasto) {
+    final valorController = TextEditingController(text: gasto.valor.toString());
+    final motivoController = TextEditingController(text: gasto.motivo);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Editar Gasto"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: valorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Valor (R\$)"),
+              ),
+              TextField(
+                controller: motivoController,
+                decoration: const InputDecoration(labelText: "Motivo"),
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () async {
-              if (valorController.text.isNotEmpty &&
-                  motivoController.text.isNotEmpty) {
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () async {
                 final valor = double.tryParse(valorController.text) ?? 0.0;
-                final novoGasto = Gasto(
+                final gastoAtualizado = Gasto(
+                  id: gasto.id,
                   valor: valor,
                   motivo: motivoController.text,
                   dia: "Hoje",
                 );
-                await DatabaseHelper.insertGasto(novoGasto);
-                saldoAtual -= valor;
+                await DatabaseHelper.updateGasto(gastoAtualizado);
 
-                if (!mounted) return; // ✅ evita erro de contexto
+                if (!mounted) return;
                 Navigator.pop(context);
                 _carregarGastos();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Gasto adicionado!")),
+                  const SnackBar(content: Text("Gasto atualizado!")),
                 );
-              }
-            },
-            child: const Text("Adicionar"),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
-  void _editarGasto(Gasto gasto) {
-  final valorController = TextEditingController(text: gasto.valor.toString());
-  final motivoController = TextEditingController(text: gasto.motivo);
-
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text("Editar Gasto"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: valorController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Valor (R\$)"),
-            ),
-            TextField(
-              controller: motivoController,
-              decoration: const InputDecoration(labelText: "Motivo"),
+              },
+              child: const Text("Salvar"),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () async {
-              final valor = double.tryParse(valorController.text) ?? 0.0;
-              final gastoAtualizado = Gasto(
-                id: gasto.id,
-                valor: valor,
-                motivo: motivoController.text,
-                dia: "Hoje",
-              );
-              await DatabaseHelper.updateGasto(gastoAtualizado);
-
-              if (!mounted) return; // ✅ evita erro de contexto
-              Navigator.pop(context);
-              _carregarGastos();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Gasto atualizado!")),
-              );
-            },
-            child: const Text("Salvar"),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
   void _excluirGasto(int id) async {
-  await DatabaseHelper.deleteGasto(id);
+    await DatabaseHelper.deleteGasto(id);
 
-  if (!mounted) return; // ✅ evita erro de contexto
-  _carregarGastos();
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Gasto excluído!")),
-  );
-}
-
+    if (!mounted) return;
+    _carregarGastos();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Gasto excluído!")),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +176,17 @@ class _Tela1State extends State<Tela1> {
       appBar: AppBar(
         title: const Text("Controle de Gastos"),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -201,7 +208,8 @@ class _Tela1State extends State<Tela1> {
                   final gasto = gastos[index];
                   return ListTile(
                     leading: const Icon(Icons.money),
-                    title: Text("${gasto.motivo} - R\$${gasto.valor.toStringAsFixed(2)}"),
+                    title: Text(
+                        "${gasto.motivo} - R\$${gasto.valor.toStringAsFixed(2)}"),
                     subtitle: Text("Dia: ${gasto.dia}"),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -224,11 +232,10 @@ class _Tela1State extends State<Tela1> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-  onPressed: _adicionarGasto,
-  backgroundColor: Colors.green,
-  child: const Icon(Icons.add), // ✅ agora o child está por último
-),
-
+        onPressed: _adicionarGasto,
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
