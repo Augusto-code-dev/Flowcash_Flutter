@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'services/auth_service.dart';
+import '../services/auth_service.dart';
+import '../dtos/auth_response_dto.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,8 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _loginController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final IAuthService authService = AuthServiceMock();
-  // AuthService() API real
+  final IAuthService authService = AuthService(); // usa API real
 
   void _handleLogin() async {
     showDialog(
@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     try {
-      final result = await authService.login(
+      final AuthResponseDto result = await authService.login(
         _loginController.text,
         _passwordController.text,
       );
@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       Navigator.pop(context);
 
-      print("Token recebido: ${result['access_token']}");
+      print("Token recebido: ${result.accessToken}");
 
       Navigator.pushReplacementNamed(context, "/dashboard");
     } catch (e) {

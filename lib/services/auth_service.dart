@@ -1,51 +1,35 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../dtos/auth_response_dto.dart';
 
 abstract class IAuthService {
-  Future<Map<String, dynamic>> login(String username, String password);
+  Future<AuthResponseDto> login(String username, String password);
 }
 
 class AuthService implements IAuthService {
-  final String baseUrl = "http://10.0.2.2:8085/api/auth/login";
+  final String baseUrl = "https://mobile-ios-login.zani0x03.eti.br/api/auth/login";
+  final String sistemaId = "55688c9f-6bd6-4c1c-9329-7138f3012f56";
 
   @override
-  Future<Map<String, dynamic>> login(String username, String password) async {
+  Future<AuthResponseDto> login(String username, String password) async {
     try {
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"username": username, "password": password}),
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+          "sistemald": sistemaId, // corrigido conforme API
+        }),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return AuthResponseDto.fromJson(jsonDecode(response.body));
       } else {
-        throw Exception("Falha no login: ${response.statusCode}");
+        throw Exception("Credenciais inválidas ou erro no servidor (${response.statusCode}).");
       }
     } catch (e) {
-      throw Exception("Erro de conexão: $e");
-    }
-  }
-}
-
-// --- IMPLEMENTAÇÃO MOCK ---
-class AuthServiceMock implements IAuthService {
-  @override
-  Future<Map<String, dynamic>> login(String username, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (username == "ztiago" && password == "123456") {
-      return {
-        "access_token": "token_exemplo",
-        "expires_in": 299,
-        "refresh_expires_in": 1799,
-        "refresh_token": "refresh_token_exemplo",
-        "token_type": "Bearer",
-        "session_state": "abc123",
-        "scope": "profile email"
-      };
-    } else {
-      throw Exception("Usuário ou senha inválidos (Mock)");
+      throw Exception("Erro ao conectar na API: $e");
     }
   }
 }
