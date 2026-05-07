@@ -3,26 +3,10 @@ import 'models/gasto.dart';
 import 'db/database_helper.dart';
 import 'chat.dart'; // ✅ import da tela de chat
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FlowCash',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const Tela1(),
-    );
-  }
-}
-
 class Tela1 extends StatefulWidget {
-  const Tela1({super.key});
+  final String token; // ✅ recebe o token do login
+
+  const Tela1({super.key, required this.token});
 
   @override
   State<Tela1> createState() => _Tela1State();
@@ -31,7 +15,6 @@ class Tela1 extends StatefulWidget {
 class _Tela1State extends State<Tela1> {
   final double salario = 1400.0;
   double saldoAtual = 1380.0;
-
   List<Gasto> gastos = [];
 
   @override
@@ -182,7 +165,9 @@ class _Tela1State extends State<Tela1> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ChatScreen()),
+                MaterialPageRoute(
+                  builder: (context) => ChatScreen(token: widget.token), // ✅ passa o token real
+                ),
               );
             },
           ),

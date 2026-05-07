@@ -1,30 +1,20 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flowcash/login.dart';
+import 'package:flutter/material.dart';
+import 'package:flowcash/main.dart'; // ⚠️ verifique se o nome do projeto no pubspec.yaml é o mesmo
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Verifica se o título FlowCash aparece na tela inicial',
+      (WidgetTester tester) async {
+    // Inicializa o app
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verifica se o texto "FlowCash" está presente
+    expect(find.text('FlowCash'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verifica se o botão "Entrar" existe
+    expect(find.text('Entrar'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verifica se o campo de usuário está presente
+    expect(find.byType(TextField), findsNWidgets(2)); // usuário e senha
   });
 }

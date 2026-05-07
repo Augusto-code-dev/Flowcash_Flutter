@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String token; // token vindo do login
+  const ChatScreen({super.key, required this.token});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -10,12 +13,48 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
 
-  // Lista de mensagens (apenas exemplo estático)
-  final List<Map<String, String>> mensagens = [
-    {"remetente": "bot", "texto": "Olá! Eu sou seu assistente FlowCash."},
-    {"remetente": "user", "texto": "Oi, quero saber meus gastos."},
-    {"remetente": "bot", "texto": "Claro! Você gastou R\$90 esta semana."},
-  ];
+  // Lista de mensagens
+  final List<Map<String, String>> mensagens = [];
+
+  Future<String> chamarApiIA(String pergunta) async {
+    try {
+      // Exemplo de chamada a uma API de chatbot
+      final response = await http.post(
+        Uri.parse("https://mobile-ios-ia.zani0x03.eti.br/api/ai/chat"),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode({"prompt": pergunta}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["resposta"] ?? "Não entendi sua pergunta.";
+      } else {
+        return "Erro na API (${response.statusCode}).";
+      }
+    } catch (e) {
+      return "Erro de conexão: $e";
+    }
+  }
+
+  void _enviarMensagem() async {
+    if (_controller.text.isEmpty) return;
+
+    final texto = _controller.text;
+    setState(() {
+      mensagens.add({"remetente": "user", "texto": texto});
+    });
+    _controller.clear();
+
+    // Chama API de IA
+    final resposta = await chamarApiIA(texto);
+
+    setState(() {
+      mensagens.add({"remetente": "bot", "texto": resposta});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,17 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.send, color: Colors.green),
-                  onPressed: () {
-                    if (_controller.text.isNotEmpty) {
-                      setState(() {
-                        mensagens.add({
-                          "remetente": "user",
-                          "texto": _controller.text,
-                        });
-                      });
-                      _controller.clear();
-                    }
-                  },
+                  onPressed: _enviarMensagem,
                 ),
               ],
             ),

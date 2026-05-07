@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../dtos/auth_response_dto.dart';
+import 'services/auth_service.dart';
+import 'dtos/auth_response_dto.dart';
+import 'tela1.dart'; // importa a tela principal
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final AuthResponseDto result = await authService.login(
-        _usernameController.text,   // agora passa como username
+        _usernameController.text,
         _passwordController.text,
       );
 
@@ -33,7 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       print("Token recebido: ${result.accessToken}");
 
-      Navigator.pushReplacementNamed(context, "/dashboard");
+      // ✅ Passa o token real para a tela principal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => Tela1(token: result.accessToken)),
+      );
     } catch (e) {
       if (mounted) Navigator.pop(context);
 

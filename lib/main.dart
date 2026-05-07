@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flowcash/tela1.dart';
 import 'login.dart';
+import 'tela1.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,9 +15,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FlowCash',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: const LoginScreen(),
+      // 🚀 Começa pelo Login
+      initialRoute: '/',
       routes: {
-        "/dashboard": (context) => const Tela1(),
+        '/': (context) => const LoginScreen(),
+        // ⚠️ Tela1 não é instanciada aqui porque precisa do token
+        // O LoginScreen vai navegar para Tela1(token: result.accessToken)
       },
     );
   }
