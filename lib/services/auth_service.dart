@@ -19,7 +19,7 @@ class AuthService implements IAuthService {
         body: jsonEncode({
           "username": username,
           "password": password,
-          "sistemald": sistemaId, // corrigido conforme API
+          "sistemaId": sistemaId, // corrigido conforme API
         }),
       );
 

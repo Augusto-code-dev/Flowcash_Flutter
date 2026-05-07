@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _loginController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   final IAuthService authService = AuthService(); // usa API real
@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final AuthResponseDto result = await authService.login(
-        _loginController.text,
+        _usernameController.text,   // agora passa como username
         _passwordController.text,
       );
 
@@ -65,9 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 32),
             TextField(
-              controller: _loginController,
+              controller: _usernameController,
               decoration: const InputDecoration(
-                labelText: "E-mail ou Usuário",
+                labelText: "Usuário ou E-mail",
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),

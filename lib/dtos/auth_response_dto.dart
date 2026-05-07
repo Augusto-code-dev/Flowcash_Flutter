@@ -11,9 +11,9 @@ class AuthResponseDto {
 
   factory AuthResponseDto.fromJson(Map<String, dynamic> json) {
     return AuthResponseDto(
-      accessToken: json['access_token'] ?? '',
-      refreshToken: json['refresh_token'] ?? '',
-      expiresIn: json['expires_in'] ?? 0,
+      accessToken: json['access_token']?.toString() ?? '',
+      refreshToken: json['refresh_token']?.toString() ?? '',
+      expiresIn: int.tryParse(json['expires_in']?.toString() ?? '0') ?? 0,
     );
   }
 }
