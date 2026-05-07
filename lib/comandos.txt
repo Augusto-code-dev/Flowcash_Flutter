@@ -1,0 +1,13 @@
+git clone https://github.com/Augusto-code-dev/Flowcash_Flutter.git
+cd Flowcash_Flutter
+code .
+
+flutter clean
+flutter get
+flutter run
+
+git status
+git add .
+git commit -m "Mensagem explicando o que foi alterado"
+git push origin main
+
