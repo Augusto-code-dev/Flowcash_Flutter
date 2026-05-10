@@ -34,7 +34,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       print("Token recebido: ${result.accessToken}");
 
-      // ✅ Passa o token real para a tela principal
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => Tela1(token: result.accessToken)),
