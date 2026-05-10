@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'models/gasto.dart';
 import 'db/database_helper.dart';
-import 'chat.dart'; // ✅ import da tela de chat
+import 'chat.dart'; 
 
 class Tela1 extends StatefulWidget {
-  final String token; // ✅ recebe o token do login
+  final String token; 
 
   const Tela1({super.key, required this.token});
 
