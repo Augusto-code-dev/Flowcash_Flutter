@@ -19,8 +19,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginScreen(),
-        // ⚠️ Tela1 não é instanciada aqui porque precisa do token
-        // O LoginScreen vai navegar para Tela1(token: result.accessToken)
+       // O LoginScreen vai navegar para Tela1(token: result.accessToken)
       },
     );
   }
