@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/auth_service.dart';
 import 'dtos/auth_response_dto.dart';
-import 'tela1.dart'; // importa a tela principal
+import 'tela1.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final IAuthService authService = AuthService(); // usa API real
+  final IAuthService authService = AuthService(); 
 
   void _handleLogin() async {
     showDialog(
