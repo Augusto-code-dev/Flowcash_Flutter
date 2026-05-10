@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
-  final String token; // token vindo do login
+  final String token; 
   const ChatScreen({super.key, required this.token});
 
   @override
