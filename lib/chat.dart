@@ -13,12 +13,10 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
 
-  // Lista de mensagens
   final List<Map<String, String>> mensagens = [];
 
   Future<String> chamarApiIA(String pergunta) async {
     try {
-      // Exemplo de chamada a uma API de chatbot
       final response = await http.post(
         Uri.parse("https://mobile-ios-ia.zani0x03.eti.br/api/ai/chat"),
         headers: {
@@ -48,7 +46,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     _controller.clear();
 
-    // Chama API de IA
     final resposta = await chamarApiIA(texto);
 
     setState(() {
